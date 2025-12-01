@@ -53,34 +53,33 @@
 
             foreach (var rotation in ParseRotations(lines))
             {
-                var zeroClicks = Math.Abs(rotation) / 100;
+                countZeroClicks += Math.Abs(rotation) / 100;
                 var remainder = rotation % 100;
-                var tempPoint = startingPoint + remainder;
-                if (tempPoint <= 0)
+                var newPoint = startingPoint + remainder;
+                if (newPoint <= 0)
                 {
                     if (startingPoint != 0)
                     {
-                        zeroClicks++;
+                        countZeroClicks++;
                     }
-                    if (tempPoint < 0)
+                    if (newPoint < 0)
                     {
-                        tempPoint += 100;
+                        newPoint += 100;
                     }
                 }
-                else if (tempPoint >= 100)
+                else if (newPoint >= 100)
                 {
-                    zeroClicks++;
-                    tempPoint -= 100;
+                    countZeroClicks++;
+                    newPoint -= 100;
                 }
 
-                startingPoint = tempPoint;
-                countZeroClicks += zeroClicks;
+                startingPoint = newPoint;
             }
 
             return countZeroClicks;
         }
 
         static IEnumerable<int> ParseRotations(string[] lines) =>
-            lines.Select(line => (line[0] == 'L' ? -1 : 1) * line[1..].ToInt());
+            lines.Select(line => (line[0] == 'L' ? -1 : 1) * line.AsSpan(1).ToInt());
     }
 }
