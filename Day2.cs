@@ -15,7 +15,7 @@ static partial class Aoc2025
                 11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124
                 """.ToLines();
             Part1(input).Should().Be(1227775554L);
-            Part2(input).Should().Be(0);
+            Part2(input).Should().Be(0);//4174379265L);
         }
 
         void Compute()
@@ -26,39 +26,26 @@ static partial class Aoc2025
         }
 
         long Part1(string[] lines) => ParseRanges(lines).Select(SumOfSillyIds).Sum();
-        int Part2(string[] lines) => 0;
+        long Part2(string[] lines) => 0;
 
         static long SumOfSillyIds((long start, long end) range)
         {
             var (start, end) = range;
 
-            // will refactor this mess later
+            var startShiftDigits = GetStartShiftDigits();
+            var startShifted = start / startShiftDigits;
 
-            var startShiftValue = GetShiftValue(start);
-            if (startShiftValue < 0)
-            {
-                startShiftValue = -startShiftValue;
-                start = (long)Math.Pow(10, startShiftValue);
-                startShiftValue = (int)Math.Pow(10, (startShiftValue + 1) >> 1);
-            }
-            var startShifted = start / startShiftValue;
-            var startIdShifted = ShiftedId(startShiftValue, startShifted);
-            var endShiftValue = GetShiftValue(end);
-            if (endShiftValue < 0)
-            {
-                endShiftValue = -endShiftValue - 1;
-                end = (long)Math.Pow(10, endShiftValue) - 1;
-                endShiftValue = (int)Math.Pow(10, endShiftValue >> 1);
-            }
-            var endShifted = end / endShiftValue;
-            var endIdShifted = ShiftedId(endShiftValue, endShifted);
-
-            if (startIdShifted < start)
+            // adjust startShifted upwards if needed
+            if (ShiftedId(startShiftDigits, startShifted) < start)
             {
                 startShifted++;
             }
 
-            if (endIdShifted > end)
+            var endShiftValue = GetEndShiftDigits();
+            var endShifted = end / endShiftValue;
+
+            // adjust endShifted downwards if needed
+            if (ShiftedId(endShiftValue, endShifted) > end)
             {
                 endShifted--;
             }
@@ -69,17 +56,39 @@ static partial class Aoc2025
                 return 0;
             }
 
-            var sum = SumOfN(startShifted, endShifted);
+            return SumOfN(startShifted, endShifted) * (startShiftDigits + 1);
 
-            sum += sum * (startShiftValue);
-
-            return sum;
-
-            static int GetShiftValue(long value)
+            int GetStartShiftDigits()
             {
-                var nrDigits = (int)Math.Log10(value) + 1;
-                return nrDigits % 2 != 0 ? -nrDigits : (int)Math.Pow(10, nrDigits >> 1);
+                var startNrDigits = NumberOfDigits(start);
+
+                if (startNrDigits % 2 != 0)
+                {
+                    // adjust start to be the smallest even digit number with more digits
+                    start = (long)Math.Pow(10, startNrDigits);
+                    return GetShiftDigits(startNrDigits + 1);
+                }
+
+                return GetShiftDigits(startNrDigits);
             }
+
+            int GetEndShiftDigits()
+            {
+                var endNrDigits = NumberOfDigits(end);
+
+                if (endNrDigits % 2 != 0)
+                {
+                    // adjust end to be the largest even digit number with fewer digits
+                    endNrDigits -= 1;
+                    end = (long)Math.Pow(10, endNrDigits) - 1;
+                    return GetShiftDigits(endNrDigits);
+                }
+
+                return GetShiftDigits(endNrDigits);
+            }
+
+            static int GetShiftDigits(int nrDigits) => (int)Math.Pow(10, nrDigits >> 1);
+
             static long ShiftedId(int shiftValue, long shifted) => shifted * shiftValue + shifted;
         }
 
