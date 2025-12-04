@@ -71,7 +71,7 @@
             return removed;
         }
 
-        static bool IsAccessible(char[][] grid, int y, int x) => grid[y][x] == '@' && CountSurrounding(grid, y, x) < 4;
+        static bool IsAccessible(char[][] grid, int y, int x) => grid[y][x] == '@' && CountSurrounding(grid, y, x) < 5;
 
         static char[][] ParseGrid(string[] lines) => [.. lines.Select(line => line.ToCharArray())];
         static int CountSurrounding(char[][] grid, int y, int x)
@@ -85,9 +85,7 @@
 
             for (var iy = sy; iy <= ey; iy++)
             for (var ix = sx; ix <= ex; ix++)
-                if (iy == y && ix == x)
-                    continue;
-                else if (grid[iy][ix] == '@')
+                if (grid[iy][ix] == '@')
                     rolls++;
 
             return rolls;
