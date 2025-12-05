@@ -23,14 +23,14 @@
                 32
                 """.ToLines();
             Part1(input).Should().Be(3);
-            Part2(input).Should().Be(0);
+            Part2(input).Should().Be(14);
         }
 
         void Compute()
         {
             var input = File.ReadAllLines($"{day.ToLowerInvariant()}.txt");
             Part1(input).Should().Be(896);
-            Part2(input).Should().Be(0);
+            Part2(input).Should().Be(346240317247002L);
         }
 
         int Part1(string[] lines)
@@ -52,7 +52,38 @@
             }
         }
 
-        int Part2(string[] lines) => 0;
+        long Part2(string[] lines)
+        {
+            var (ranges, _) = ParseInput(lines);
+
+            // sort ranges by start
+            ranges = [.. ranges.OrderBy(r => r.start)];
+
+            var mergedRanges = MergeRanges();
+            while (ranges.Count != mergedRanges.Count)
+            {
+                ranges = mergedRanges;
+                mergedRanges = MergeRanges();
+            }
+
+            return mergedRanges.Sum(r => r.end - r.start + 1);
+
+            List<(long start, long end)> MergeRanges()
+            {
+                List<(long start, long end)> merged = [ranges[0]];
+
+                foreach (var range in ranges[1..])
+                {
+                    var (start, end) = merged[^1];
+                    if (range.start <= end && range.end >= start)
+                        merged[^1] = (start, Math.Max(end, range.end));
+                    else
+                        merged.Add(range);
+                }
+
+                return merged;
+            }
+        }
 
         static (List<(long start, long end)> ranges, List<long> ingredients) ParseInput(string[] lines)
         {
