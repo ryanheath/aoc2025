@@ -60,11 +60,6 @@
             ranges = [.. ranges.OrderBy(r => r.start)];
 
             var mergedRanges = MergeRanges();
-            while (ranges.Count != mergedRanges.Count)
-            {
-                ranges = mergedRanges;
-                mergedRanges = MergeRanges();
-            }
 
             return mergedRanges.Sum(r => r.end - r.start + 1);
 
