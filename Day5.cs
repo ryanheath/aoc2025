@@ -39,18 +39,17 @@
             var freshIngredients = 0;
 
             foreach (var ingredient in ingredients)
-            {
-                foreach (var (start, end) in ranges)
-                {
-                    if (ingredient >= start && ingredient <= end)
-                    {
-                        freshIngredients++;
-                        break;
-                    }
-                }
-            }
+                if (IsFresh(ingredient)) freshIngredients++;
 
             return freshIngredients;
+
+            bool IsFresh(long ingredient)
+            {
+                foreach (var (start, end) in ranges)
+                    if (ingredient >= start && ingredient <= end)
+                        return true;
+                return false;
+            }
         }
 
         int Part2(string[] lines) => 0;
