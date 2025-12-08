@@ -28,48 +28,93 @@
                 ...............
                 """.ToLines();
             Part1(input).Should().Be(21);
-            Part2(input).Should().Be(0);
+            Part2(input).Should().Be(40);
         }
 
         void Compute()
         {
             var input = File.ReadAllLines($"{day.ToLowerInvariant()}.txt");
             Part1(input).Should().Be(1690);
-            Part2(input).Should().Be(0);
+            Part2(input).Should().Be(221371496188107L);
         }
 
-        int Part1(string[] lines)
+        int Part1(string[] grid)
         {
-            var grid = ParseInput(lines);
+            var splitted = 0;
             var h = grid.Length;
             var w = grid[0].Length;
+            var start = (0, grid[0].IndexOf('S'));
 
-            var splitted = 0;
+            var beamsQueue = new Queue<(int Y, int X)>();
+            beamsQueue.Enqueue(start);
 
-            for (var y = 0; y < h; y++)
-            for (var x = 0; x < w; x++)
-                if (grid[y][x] is '|' or 'S')
+            while (beamsQueue.Count > 0)
+            {
+                var (y, x) = beamsQueue.Dequeue();
+                var by = y + 1;
+                if (by >= h)
                 {
-                    var by = y + 1;
-                    if (by >= h) continue;
-
-                    switch (grid[by][x])
-                    {
-                        case '.':
-                            grid[by][x] = '|';
-                            break;
-                        case '^':
-                            splitted++;
-                            var lx = x - 1; if (lx >= 0 && grid[by][lx] == '.') grid[by][lx] = '|';
-                            var rx = x + 1; if (rx  < w && grid[by][rx] == '.') grid[by][rx] = '|';
-                            break;
-                    }
+                    // exited the grid
+                    continue;
                 }
 
-            return splitted;
-        }
-        int Part2(string[] lines) => 0;
+                switch (grid[by][x])
+                {
+                    case '.': EnqueueBeam((by, x)); break;
+                    case '^':
+                        splitted++;
+                        var lx = x - 1; if (lx >= 0 && grid[by][lx] == '.') EnqueueBeam((by, lx));
+                        var rx = x + 1; if (rx  < w && grid[by][rx] == '.') EnqueueBeam((by, rx));
+                        break;
+                }
+            }
 
-        char[][] ParseInput(string[] lines) => [.. lines.Select(x => x.ToCharArray())];
+            return splitted;
+
+            void EnqueueBeam((int, int) p) { if (!beamsQueue.Contains(p)) beamsQueue.Enqueue(p); }
+        }
+        long Part2(string[] grid)
+        {
+            var countExits = 0L;
+            var h = grid.Length;
+            var w = grid[0].Length;
+            var start = (0, grid[0].IndexOf('S'));
+
+            var beamsQueue = new Queue<(int Y, int X)>();
+            beamsQueue.Enqueue(start);
+            var beams = new Dictionary<(int Y, int X), long>() { [start] = 1 };
+
+            while (beamsQueue.Count > 0)
+            {
+                var beam = beamsQueue.Dequeue();
+                var count = beams[beam];
+                beams.Remove(beam); // keep dictionary small
+                var (y, x) = beam;
+                var by = y + 1;
+                if (by >= h)
+                {
+                    // exited the grid
+                    countExits += count;
+                    continue;
+                }
+
+                switch (grid[by][x])
+                {
+                    case '.': EnqueueBeam((by, x), count); break;
+                    case '^':
+                        var lx = x - 1; if (lx >= 0 && grid[by][lx] == '.') EnqueueBeam((by, lx), count);
+                        var rx = x + 1; if (rx  < w && grid[by][rx] == '.') EnqueueBeam((by, rx), count);
+                        break;
+                }
+            }
+
+            return countExits;
+
+            void EnqueueBeam((int, int) p, long count)
+            {
+                if (!beams.ContainsKey(p)) beams[p] = count; else beams[p] += count;
+                if (!beamsQueue.Contains(p)) beamsQueue.Enqueue(p);
+            }
+        }
     }
 }
