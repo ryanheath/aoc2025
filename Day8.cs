@@ -34,25 +34,21 @@ static partial class Aoc2025
                 425,690,689
                 """.ToLines();
             Part1(input, 10).Should().Be(40);
-            Part2(input).Should().Be(0);
+            Part2(input).Should().Be(25272);
         }
 
         void Compute()
         {
             var input = File.ReadAllLines($"{day.ToLowerInvariant()}.txt");
             Part1(input, 1000).Should().Be(46398);
-            Part2(input).Should().Be(0);
+            Part2(input).Should().Be(8141888143L);
         }
 
         int Part1(string[] lines, int maxConnections)
         {
             var points = ParsePoints(lines);
-            var distances = new List<(int i, int j, long distance)>();
+            var distances = GetDistances(points);
             List<HashSet<int>> circuits = [];
-
-            for (var i = 0; i < points.Length; i++)
-                for (var j = i + 1; j < points.Length; j++)
-                    distances.Add((i, j, DistanceSquared(points[i], points[j])));
 
             var connections = 0;
 
@@ -101,7 +97,65 @@ static partial class Aoc2025
                 .Take(3)
                 .Aggregate(1, (a, b) => a * b.Count);
         }
-        int Part2(string[] lines) => 0;
+        long Part2(string[] lines)
+        {
+            var points = ParsePoints(lines);
+            var distances = GetDistances(points);
+            List<HashSet<int>> circuits = [];
+
+            foreach (var (i1, i2, _) in distances.OrderBy(x => x.distance))
+            {
+                var i1InCircuit = circuits.FirstOrDefault(c => c.Contains(i1));
+                var i2InCircuit = circuits.FirstOrDefault(c => c.Contains(i2));
+
+                if (i1InCircuit is not null && i2InCircuit is not null)
+                {
+                    if (i1InCircuit != i2InCircuit)
+                    {
+                        // merge i1 circuit into i2 circuit
+                        i2InCircuit.UnionWith(i1InCircuit);
+                        circuits.Remove(i1InCircuit);
+                        if (circuits.Count == 1 && circuits[0].Count == points.Length)
+                        {
+                            return points[i1].X * (long)points[i2].X;
+                        }
+                    }
+                    continue;
+                }
+
+                if (i1InCircuit is not null)
+                {
+                    i1InCircuit.Add(i2);
+                    if (circuits.Count == 1 && circuits[0].Count == points.Length)
+                    {
+                        return points[i1].X * (long)points[i2].X;
+                    }
+                    continue;
+                }
+
+                if (i2InCircuit is not null)
+                {
+                    i2InCircuit.Add(i1);
+                    if (circuits.Count == 1 && circuits[0].Count == points.Length)
+                    {
+                        return points[i1].X * (long)points[i2].X;
+                    }
+                    continue;
+                }
+
+                circuits.Add([i1, i2]);
+            }
+            throw new UnreachableException();
+        }
+
+        static List<(int i, int j, long distance)> GetDistances((int X, int Y, int Z)[] points)
+        {
+            List<(int i, int j, long distance)> distances = [];
+            for (var i = 0; i < points.Length; i++)
+                for (var j = i + 1; j < points.Length; j++)
+                    distances.Add((i, j, DistanceSquared(points[i], points[j])));
+            return distances;
+        }
 
         static long DistanceSquared((int X, int Y, int Z) p1, (int X, int Y, int Z) p2)
         {
