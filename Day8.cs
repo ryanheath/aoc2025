@@ -52,8 +52,9 @@ static partial class Aoc2025
 
             var connections = 0;
 
-            foreach (var (i1, i2, _) in distances.OrderBy(x => x.distance))
+            while (distances.Count > 0)
             {
+                var (i1, i2) = distances.Dequeue();
                 if (connections == maxConnections)
                 {
                     break;
@@ -103,8 +104,10 @@ static partial class Aoc2025
             var distances = GetDistances(points);
             List<HashSet<int>> circuits = [];
 
-            foreach (var (i1, i2, _) in distances.OrderBy(x => x.distance))
+            while (distances.Count > 0)
             {
+                var (i1, i2) = distances.Dequeue();
+
                 var i1InCircuit = circuits.FirstOrDefault(c => c.Contains(i1));
                 var i2InCircuit = circuits.FirstOrDefault(c => c.Contains(i2));
 
@@ -148,12 +151,12 @@ static partial class Aoc2025
             throw new UnreachableException();
         }
 
-        static List<(int i, int j, long distance)> GetDistances((int X, int Y, int Z)[] points)
+        static PriorityQueue<(int i, int j), long> GetDistances((int X, int Y, int Z)[] points)
         {
-            List<(int i, int j, long distance)> distances = [];
+            PriorityQueue<(int i, int j), long> distances = new();
             for (var i = 0; i < points.Length; i++)
                 for (var j = i + 1; j < points.Length; j++)
-                    distances.Add((i, j, DistanceSquared(points[i], points[j])));
+                    distances.Enqueue((i, j), DistanceSquared(points[i], points[j]));
             return distances;
         }
 
