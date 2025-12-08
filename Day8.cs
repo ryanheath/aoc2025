@@ -44,62 +44,34 @@ static partial class Aoc2025
             Part2(input).Should().Be(8141888143L);
         }
 
-        int Part1(string[] lines, int maxConnections)
+        long Part1(string[] lines, int maxConnections)
         {
-            var points = ParsePoints(lines);
-            var distances = GetDistances(points);
-            List<HashSet<int>> circuits = [];
-
             var connections = 0;
-
-            while (distances.Count > 0)
+            return CombinePoints(lines, (points, circuits, _, _) =>
             {
-                var (i1, i2) = distances.Dequeue();
-                if (connections == maxConnections)
-                {
-                    break;
-                }
-
-                var i1InCircuit = circuits.FirstOrDefault(c => c.Contains(i1));
-                var i2InCircuit = circuits.FirstOrDefault(c => c.Contains(i2));
-
-                if (i1InCircuit is not null && i2InCircuit is not null)
-                {
-                    if (i1InCircuit != i2InCircuit)
-                    {
-                        // merge i1 circuit into i2 circuit
-                        i2InCircuit.UnionWith(i1InCircuit);
-                        circuits.Remove(i1InCircuit);
-                    }
-                    connections++;
-                    continue;
-                }
-
-                if (i1InCircuit is not null)
-                {
-                    i1InCircuit.Add(i2);
-                    connections++;
-                    continue;
-                }
-
-                if (i2InCircuit is not null)
-                {
-                    i2InCircuit.Add(i1);
-                    connections++;
-                    continue;
-                }
-
-                circuits.Add([i1, i2]);
                 connections++;
-            }
-
-            return circuits
-                .OrderByDescending(x => x.Count)
-                .Take(3)
-                .Aggregate(1, (a, b) => a * b.Count);
+                if (connections >= maxConnections)
+                {
+                    int[] top3 = [.. circuits.OrderByDescending(x => x.Count).Select(x => x.Count).Take(3)];
+                    return (true, top3[0] * top3[1] * top3[2]);
+                }
+                return (false, 0);
+            });
         }
         long Part2(string[] lines)
         {
+            return CombinePoints(lines, (points, circuits, i1, i2) =>
+            {
+                if (circuits.Count == 1 && circuits[0].Count == points.Length)
+                {
+                    return (true, points[i1].X * (long)points[i2].X);
+                }
+                return (false, 0L);
+            });
+        }
+
+        long CombinePoints(string[] lines, Func<(int X, int Y, int Z)[], List<HashSet<int>>, int, int, (bool, long)> breakCondition)
+        {
             var points = ParsePoints(lines);
             var distances = GetDistances(points);
             List<HashSet<int>> circuits = [];
@@ -108,45 +80,27 @@ static partial class Aoc2025
             {
                 var (i1, i2) = distances.Dequeue();
 
-                var i1InCircuit = circuits.FirstOrDefault(c => c.Contains(i1));
-                var i2InCircuit = circuits.FirstOrDefault(c => c.Contains(i2));
+                var circuitI1 = circuits.FirstOrDefault(c => c.Contains(i1));
+                var circuitI2 = circuits.FirstOrDefault(c => c.Contains(i2));
 
-                if (i1InCircuit is not null && i2InCircuit is not null)
+                if (circuitI1 is not null && circuitI2 is not null)
                 {
-                    if (i1InCircuit != i2InCircuit)
+                    if (circuitI1 != circuitI2)
                     {
                         // merge i1 circuit into i2 circuit
-                        i2InCircuit.UnionWith(i1InCircuit);
-                        circuits.Remove(i1InCircuit);
-                        if (circuits.Count == 1 && circuits[0].Count == points.Length)
-                        {
-                            return points[i1].X * (long)points[i2].X;
-                        }
+                        circuitI2.UnionWith(circuitI1);
+                        circuits.Remove(circuitI1);
                     }
-                    continue;
                 }
+                else if (circuitI1 is not null) { circuitI1.Add(i2); } 
+                else if (circuitI2 is not null) { circuitI2.Add(i1); }
+                else { circuits.Add([i1, i2]);}
 
-                if (i1InCircuit is not null)
+                var (shouldBreak, result) = breakCondition(points, circuits, i1, i2);
+                if (shouldBreak)
                 {
-                    i1InCircuit.Add(i2);
-                    if (circuits.Count == 1 && circuits[0].Count == points.Length)
-                    {
-                        return points[i1].X * (long)points[i2].X;
-                    }
-                    continue;
+                    return result;
                 }
-
-                if (i2InCircuit is not null)
-                {
-                    i2InCircuit.Add(i1);
-                    if (circuits.Count == 1 && circuits[0].Count == points.Length)
-                    {
-                        return points[i1].X * (long)points[i2].X;
-                    }
-                    continue;
-                }
-
-                circuits.Add([i1, i2]);
             }
             throw new UnreachableException();
         }
