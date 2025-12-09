@@ -33,18 +33,8 @@
         long Part1(string[] lines)
         {
             var points = ParsePoints(lines);
-            var areas = GetAreas(points);
 
-            areas.TryPeek(out var _, out var biggestArea);
-
-            return -biggestArea;
-        }
-        int Part2(string[] lines) => 0;
-
-        static PriorityQueue<(int x, int y), long> GetAreas((int x, int y)[] points)
-        {
-            var areas = new PriorityQueue<(int x, int y), long>();
-
+            long biggestArea = 0;
             for (var i = 0; i < points.Length; i++)
             {
                 var p1 = points[i];
@@ -52,12 +42,17 @@
                 {
                     var p2 = points[j];
                     var area = Area(p1, p2);
-                    areas.Enqueue((i, j), -area);
+                    if (area > biggestArea)
+                    {
+                        biggestArea = area;
+                    }
                 }
             }
 
-            return areas;
+            return biggestArea;
         }
+        int Part2(string[] lines) => 0;
+
         static long Area((int x, int y) p1, (int x, int y) p2) => (Math.Abs(p1.x - (long)p2.x) + 1) * (Math.Abs(p1.y - (long)p2.y) + 1);
         static (int x, int y)[] ParsePoints(string[] lines) => [.. lines.Select(line => line.To2Ints(","))];
     }
